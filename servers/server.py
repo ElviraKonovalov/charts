@@ -7,7 +7,10 @@ import pandas as pd
 import json
 import plotly
 
-
+'''
+Web Visualization with Plotly and Flask:
+https://towardsdatascience.com/web-visualization-with-plotly-and-flask-3660abf9c946
+'''
 app = Flask(__name__)
 
 @app.route('/')
@@ -68,6 +71,7 @@ def activity_recap():
       )
   )
 
+  # https://stackoverflow.com/a/68899741
   updatemenus = [{
                   'buttons': [{'method': 'update',
                                'label': 'Km/Miles',
