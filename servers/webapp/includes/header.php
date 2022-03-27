@@ -21,7 +21,7 @@
   </div>
   <div class="w3-padding-64 w3-large w3-text-grey" style="font-weight:bold">
     <a href="#" class="w3-bar-item w3-button">MACROS</a>
-    <a href="#" class="w3-bar-item w3-button">ELEVATION/RISE INTENSITY</a>
+    <a href="elevation.php" class="w3-bar-item w3-button">ELEVATION/RIDE INTENSITY</a>
     <a href="distance_travelled.php" class="w3-bar-item w3-button">DISTANCE TRAVELLED</a>
     <a href="activity_recap.php" class="w3-bar-item w3-button">ACTIVITY RECAP</a>
     <a href="moving_avg.php" class="w3-bar-item w3-button">MOVING AVERAGE</a>
