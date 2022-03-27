@@ -202,7 +202,7 @@ def elevation():
     x_max = df_meters.loc[df_meters.WorkoutID == num]['Distance'].max() + 5 * 0.3048
     fig.update_layout(title_text="Elevation / Ride Intensity",
                       title_x=0.5,
-                      xaxis=dict(range=[-10 * 0.3048, x_max],
+                      xaxis=dict(range=[-5 * 0.3048, x_max],
                                  title='distance traveled [meters]',
                                  titlefont_size=15,
                                  tickfont_size=15),
