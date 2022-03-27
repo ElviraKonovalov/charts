@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 import plotly.graph_objects as go
 import chart_studio
 import chart_studio.plotly as py
@@ -105,10 +105,14 @@ def activity_recap():
   return render_template('activity_recap.html', graphJSON=graphJSON)
 
 
-@app.route('/moving_avg')
+@app.route('/moving_avg', methods=['POST', 'GET'])
 def moving_avg():
+  n = 5
+  if request.method == 'POST':
+    n = int(request.form['window'])
+
   df=pd.read_csv("biking.csv")
-  df["moveAvg"] = df["km/hr"].rolling(5).mean()
+  df["moveAvg"] = df["km/hr"].rolling(n).mean()
 
   fig = go.Figure([go.Scatter(x=df["date"], y=df["moveAvg"])])
 
