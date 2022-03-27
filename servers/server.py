@@ -1,9 +1,11 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 import plotly.graph_objects as go
-import plotly
+import chart_studio
+import chart_studio.plotly as py
+import chart_studio.tools as tls
 import pandas as pd
 import json
-
+import plotly
 
 '''
 Web Visualization with Plotly and Flask:
@@ -11,119 +13,119 @@ https://towardsdatascience.com/web-visualization-with-plotly-and-flask-3660abf9c
 '''
 app = Flask(__name__)
 
-
 @app.route('/')
 def index():
     return render_template('index.html')
 
-
 @app.route('/activity_recap')
 def activity_recap():
     # Load data
-    df = pd.read_csv("data.csv")
+  df = pd.read_csv("data.csv")
 
-    # Create figure
-    fig = go.Figure()
+  # Create figure
+  fig = go.Figure()
 
-    y_miles = df.Distance
-    y_km = df.Distance * 1.60934
+  y_miles = df.Distance
+  y_km = df.Distance * 1.60934
 
-    fig.add_trace(
-        go.Bar(x=df.Date, y=y_miles, marker_color='indianred'))
+  fig.add_trace(
+      go.Bar(x=df.Date, y=y_miles, marker_color='indianred'))
 
-    # Set title
-    fig.update_layout(
-        title_text="Activity Recap",
-        title_x=0.5
-    )
+  # Set title
+  fig.update_layout(
+      title_text="Activity Recap",
+      title_x=0.5
+  )
 
-    # Add range slider
-    fig.update_layout(
-        yaxis=dict(
-            title='Distance',
-            titlefont_size=16,
-            tickfont_size=14,
-        ),
-        xaxis=dict(
-            rangeselector=dict(
-                buttons=list([
-                    dict(count=7,
-                         label="WEEK",
-                         step="day",
-                         stepmode="backward"),
-                    dict(count=1,
-                         label="MONTH",
-                         step="month",
-                         stepmode="backward"),
+  # Add range slider
+  fig.update_layout(
+      yaxis=dict(
+          title='Distance',
+          titlefont_size=16,
+          tickfont_size=14,
+      ),
+      xaxis=dict(
+          rangeselector=dict(
+              buttons=list([
+                  dict(count=7,
+                       label="WEEK",
+                       step="day",
+                       stepmode="backward"),
+                  dict(count=1,
+                       label="MONTH",
+                       step="month",
+                       stepmode="backward"),
 
-                    dict(count=1,
-                         label="YEAR",
-                         step="year",
-                         stepmode="backward"),
-                    dict(label="ALL",
-                         step="all")
-                ])
-            ),
-            rangeslider=dict(
-                visible=False
-            ),
-            type="date"
-        )
-    )
+                  dict(count=1,
+                       label="YEAR",
+                       step="year",
+                       stepmode="backward"),
+                  dict(label="ALL",
+                       step="all")
+              ])
+          ),
+          rangeslider=dict(
+              visible=False
+          ),
+          type="date"
+      )
+  )
 
-    # https://stackoverflow.com/a/68899741
-    updatemenus = [{
-        'buttons': [{'method': 'update',
-                     'label': 'Km/Miles',
-                     'args': [
-                         # 1. updates to the traces
-                         {'y': [y_km],
-                          'visible': True},
-                         # 2. updates to the layout
-                         {'yaxis_title_text': 'Distance (km)'},
-                         # 3. which traces are affected
-                         [0, 1],
+  # https://stackoverflow.com/a/68899741
+  updatemenus = [{
+                  'buttons': [{'method': 'update',
+                               'label': 'Km/Miles',
+                               'args': [
+                                        # 1. updates to the traces
+                                        {'y': [y_km],
+                                         'visible': True},
+                                         # 2. updates to the layout
+                                        {'yaxis_title_text':'Distance (km)'},
+                                        # 3. which traces are affected 
+                                        [0, 1],
+                                        
+                                        ],
+                               'args2': [
+                                         # 1. updates to the traces  
+                                         {'y': [y_miles],
+                                         'visible':True},
+                                         # 2. updates to the layout
+                                        {'yaxis_title_text':'Distance (miles)'},
+                                         # 3. which traces are affected
+                                         [0, 1]
+                                        ]
+                                },
+                              ],
+                  'type':'buttons',
+                  'direction': 'down',
+                  'showactive': True,}]
+  fig.update_layout(updatemenus=updatemenus)
 
-                     ],
-                     'args2': [
-                         # 1. updates to the traces
-                         {'y': [y_miles],
-                          'visible': True},
-                         # 2. updates to the layout
-                         {'yaxis_title_text': 'Distance (miles)'},
-                         # 3. which traces are affected
-                         [0, 1]
-                     ]
-                     },
-                    ],
-        'type': 'buttons',
-        'direction': 'down',
-        'showactive': True, }]
-
-    fig.update_layout(updatemenus=updatemenus)
-
-    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-    return render_template('activity_recap.html', graphJSON=graphJSON)
+  graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+  return render_template('activity_recap.html', graphJSON=graphJSON)
 
 
-@app.route('/moving_avg')
+@app.route('/moving_avg', methods=['POST', 'GET'])
 def moving_avg():
-    df = pd.read_csv("biking.csv")
-    df["moveAvg"] = df["km/hr"].rolling(5).mean()
+  n = 5
+  if request.method == 'POST':
+    n = int(request.form['window'])
 
-    fig = go.Figure([go.Scatter(x=df["date"], y=df["moveAvg"])])
+  df=pd.read_csv("biking.csv")
+  df["moveAvg"] = df["km/hr"].rolling(n).mean()
 
-    fig.update_layout(
-        title_text="Moving Average",
-        title_x=0.5,
-        yaxis=dict(
-            title='km/hr',
-            titlefont_size=16,
-            tickfont_size=14))
+  fig = go.Figure([go.Scatter(x=df["date"], y=df["moveAvg"])])
 
-    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-    return render_template('moving_avg.html', graphJSON=graphJSON)
+  fig.update_layout(
+    title_text="Moving Average",
+    title_x=0.5,
+    yaxis=dict(
+    title='km/hr',
+    titlefont_size=16,
+    tickfont_size=14))
 
+  graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+  return render_template('moving_avg.html', graphJSON=graphJSON)
 
 @app.route('/elevation')
 def elevation():
@@ -132,8 +134,8 @@ def elevation():
     df = pd.read_csv("elevation.csv")
     df_ft = pd.read_csv("elevation.csv")
     df_meters = pd.read_csv("elevation.csv")
-    df_meters['Value'] = df_meters['Value'].apply(lambda y: y*0.3048)
-    df_meters['Distance'] = df_meters['Distance'].apply(lambda x: x*0.3048)
+    df_meters['Value'] = df_meters['Value'].apply(lambda y: y * 0.3048)
+    df_meters['Distance'] = df_meters['Distance'].apply(lambda x: x * 0.3048)
 
     def mul(int):
         if int == 0:
@@ -149,20 +151,20 @@ def elevation():
     #fig = go.Figure([go.Scatter(x=df["Distance"], y=df["Value"])])
     '''
 
-    #df_temp = df[df.WorkoutID.eq(num)]
+    # df_temp = df[df.WorkoutID.eq(num)]
     # simple line
-    #fig = go.Figure([go.Scatter(x=df.Distance.filter(df.WorkoutID.eq(num)), y=df.Value.filter(df.WorkoutID.eq(num)))])
+    # fig = go.Figure([go.Scatter(x=df.Distance.filter(df.WorkoutID.eq(num)), y=df.Value.filter(df.WorkoutID.eq(num)))])
 
-    #fig = go.Figure([go.Scatter(x=df.loc[df.WorkoutID == num]['Distance'],
+    # fig = go.Figure([go.Scatter(x=df.loc[df.WorkoutID == num]['Distance'],
     #                            y=df.loc[df.WorkoutID == num]['Value'])])
 
-    #initial fig with meters by default
+    # initial fig with meters by default
     i = 0
     # fig.data = []
     for v in df_meters.loc[df_meters.WorkoutID == num]['Value']:
         if i < len(df_meters.loc[df_meters.WorkoutID == num]) - 1:
             if (df_meters.loc[df_meters.WorkoutID == num]['Value'][i]) > (
-            df_meters.loc[df_meters.WorkoutID == num]['Value'][i + 1]):
+                    df_meters.loc[df_meters.WorkoutID == num]['Value'][i + 1]):
                 fig.add_trace(go.Scatter(x=[df_meters.loc[df_meters.WorkoutID == num]['Distance'][i],
                                             df_meters.loc[df_meters.WorkoutID == num]['Distance'][i + 1] - 0.2],
                                          y=[df_meters.loc[df_meters.WorkoutID == num]['Value'][i],
@@ -197,10 +199,10 @@ def elevation():
     # fig.update_layout(showlegend=False)
     y_min = df_meters.loc[df_meters.WorkoutID == num]['Value'].min() - 20 * 0.3048
     y_max = df_meters.loc[df_meters.WorkoutID == num]['Value'].max() + 20 * 0.3048
-    x_max = df_meters.loc[df_meters.WorkoutID == num]['Distance'].max() + 5*0.3048
+    x_max = df_meters.loc[df_meters.WorkoutID == num]['Distance'].max() + 5 * 0.3048
     fig.update_layout(title_text="Elevation / Ride Intensity",
                       title_x=0.5,
-                      xaxis=dict(range=[-10*0.3048, x_max],
+                      xaxis=dict(range=[-10 * 0.3048, x_max],
                                  title='distance traveled [meters]',
                                  titlefont_size=15,
                                  tickfont_size=15),
@@ -209,9 +211,8 @@ def elevation():
                                  titlefont_size=15,
                                  tickfont_size=15))
 
-    #hiding trace legend
-    #fig.update_layout(showlegend=False)
-
+    # hiding trace legend
+    # fig.update_layout(showlegend=False)
 
     '''fig.update_layout(
         title_text="Elevation / Ride Intensity",
@@ -225,7 +226,7 @@ def elevation():
             titlefont_size=15,
             tickfont_size=15))'''
 
-    #Groundwork for ft-meter conversion and workout selection
+    # Groundwork for ft-meter conversion and workout selection
     '''
     def foo1():
         i = 0
@@ -264,7 +265,7 @@ def elevation():
         fig.update_layout(yaxis=dict(range=[y_min, y_max]))
         x_max = df.loc[df.WorkoutID == num]['Distance'].max() + 10
         fig.update_layout(xaxis=dict(range=[-10, x_max]))
-        
+
         fig.update_layout(
             title_text="Elevation / Ride Intensity",
             title_x=0.5,
@@ -276,7 +277,7 @@ def elevation():
                 title='distance traveled [ft]',
                 titlefont_size=15,
                 tickfont_size=15))
-        
+
 
 
     def foo2():
@@ -311,7 +312,7 @@ def elevation():
                                              fill='tozeroy',
                                              fillcolor='lightcoral'))
                     i = i + 1
-      
+
 
         # hiding trace legend
         #fig.update_layout(showlegend=False)
@@ -322,10 +323,10 @@ def elevation():
         fig.update_layout(xaxis=dict(range=[-10, x_max]))
 
 
-    
+
     #yy = df.loc[df.WorkoutID == num]['Value'].apply(lambda y: y * 0.3048)
     #xx = df.loc[df.WorkoutID == num]['Distance'].apply(lambda y: y * 0.3048)
-    
+
     updatemenus = [{
         'buttons': [{'method': 'update',
                      'label': 'ft/meters',
@@ -362,10 +363,9 @@ def elevation():
     # update layout with buttons, and show the figure
     fig.update_layout(updatemenus=updatemenus)'''
 
-
     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     return render_template('elevation.html', graphJSON=graphJSON)
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+  app.run(debug=True)
