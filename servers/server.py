@@ -107,14 +107,23 @@ def activity_recap():
 
 @app.route('/moving_avg', methods=['POST', 'GET'])
 def moving_avg():
+  # default values
   n = 5
+  date1 = '2020-02-17'
+  date2 = '2020-02-27'
   if request.method == 'POST':
     n = int(request.form['window'])
+    date1 = request.form['date1']
+    date2 = request.form['date2']
 
-  df=pd.read_csv("biking.csv")
-  df["moveAvg"] = df["km/hr"].rolling(n).mean()
+  df=pd.read_csv("data.csv")
+  df["moveAvg"] = df["Distance"].rolling(n).mean()
 
-  fig = go.Figure([go.Scatter(x=df["date"], y=df["moveAvg"])])
+  df['Date'] = pd.to_datetime(df['Date'])
+  selected_dates = (df['Date'] >= date1) & (df['Date'] <= date2)
+  df = df.loc[selected_dates]
+
+  fig = go.Figure([go.Scatter(x=df['Date'], y=df['moveAvg'])])
 
   fig.update_layout(
     title_text="Moving Average",
