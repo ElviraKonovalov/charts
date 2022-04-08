@@ -1,36 +1,37 @@
 <?php
+   include 'includes/db-connect.php';
+   include 'includes/header.php';
 
-  include 'includes/db-connect.php';
-  include 'includes/header.php';
+   // setting up my select query
+   $sql = "SELECT * FROM distancetravelled";
 
-  // setting up my select query
-  $sql = "SELECT * FROM distancetravelled";
+   if(!$conn ) {
+     die('Could not connect: ' . mysqli_error());
+   }
+   $result = $conn->query($sql);
+ 
+   if (!empty($result) && $result->num_rows > 0) {
+ 
+   $arr=array();
+ 
+   // output data from each row of the database into each row of the table
+   while($row = $result->fetch_assoc()) {
+ 
+     $date=$row["Day"];
+     $distance=$row["Distance"];
+ 
+     $day =strtotime($date);
+ 
+     $insert = array($day,$distance);
+ 
+     $arr[] = $insert; 
+ 
+     }
+   }
 
-  if(!$conn ) {
-    die('Could not connect: ' . mysqli_error());
- }
-  $result = $conn->query($sql);
 
- if (!empty($result) && $result->num_rows > 0) {
+  //====================== CALCULATE WEEKLY ==================================
 
-  $arr=array();
-
-  // output data from each row of the database into each row of the table
-  while($row = $result->fetch_assoc()) {
-
-    $date=$row["Day"];
-    $distance=$row["Distance"];
-
-    $day =strtotime($date);
-
-    $insert = array($day,$distance);
-
-    $arr[] = $insert; 
-
-    }
-  
-
-  //Generate based on weekly
 
   // 1) Weekly array
   $weekly=array();
@@ -56,7 +57,7 @@
 
   $k=0;
 
-  // add up any middle week (if total days > 7, while )
+  //3. add up any middle week (if total days > 7, while )
   if((sizeof($arr)-$i)>7){
 
     //calculate how many times we should run next step
@@ -66,7 +67,6 @@
       $total_otw=0;
       for($j=$i;$j<($i+7);$j++){
         $total_otw = $arr[$j][1]+$total_otw;
-        //$dayOfWeek = date("l", $arr[$i][0]);
       }
       $i=$j;
 
@@ -88,22 +88,59 @@
 
   //Store into DB
   $insert=array("['w".($k+2)."',".$total_otw."]");
-  $weekly[]=$insert;
+  $weekly[]=$insert; 
 
-  //Generate based on monthly
+ 
+  // $time = $_POST["time"];
 
-  //generate based on yearly
+   //====================== CALCULATE MONTHLY ==================================
+    $monthly=array();
 
+    $total_of_the_month=0;
+  
+    //calculate how many time we should run this step.
+    $times=(intval(sizeof($arr)/30)+1);
+  
+    $j=0;
+  
+    for($i=0;$i<$times;$i++){
+  
+      $total_of_the_month=0;
+     
+      do{
+        $total_of_the_month = $arr[$j][1]+$total_of_the_month;
+  
+        if($j>=sizeof($arr)-1){
+          break;
+        }
+  
+        $j++;
+  
+        $nDay=date("d",$arr[$j][0]);
+  
+      }while($nDay!=1);
+  
+      //Store into DB
+      $insert=array("['m".($i+1)."',".$total_of_the_month."]");
+      $monthly[]=$insert;
+  
+    }
+
+  //searches for user selection  
+  if(isset($_POST["submit"])){
+
+    $time=$_POST["time"];
+
+    if($time=="weekly"){
+      $display=$weekly;
+    }
+    else if($time=="monthly"){
+      $display=$monthly;
+    }
   }
   else{
-
-    $weekly=array();
-
-    $insert=array("['w0',0]");
-    $weekly[]=$insert;
-
+    $display=$weekly;
   }
-
 ?>
 
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -114,8 +151,8 @@
       var data = google.visualization.arrayToDataTable([
         ["Day", "Distance (KM)"]
         <?php
-        for($i=0;$i<sizeof($weekly);$i++){
-          foreach($weekly[$i] as $entry) {
+        for($i=0;$i<sizeof($display);$i++){
+          foreach($display[$i] as $entry) {
             echo ",".$entry;
           }
         }
@@ -148,7 +185,20 @@
     <!-- <div id='chart' class='chart'></div> -->
   </div>
 
-  <div id="columnchart_values" style="width: 900px; height: 300px;"></div>
+  <section id="wrapper">
+
+    <div id="buttons">
+    <form method="POST" action="<?php echo $_SERVER['PHP_SELF']; ?>">
+      <select name="time" id="time">
+        <option value="weekly" name="weekly">Weekly</option>
+        <option value="monthly" name="monthly">Monthly</option>
+        <option value="yearly" name="yearly">Yearly</option>
+      </select>
+      <button type="submit" name="submit">GENERATE</button>
+      </form>
+    </div>
+    <div id="columnchart_values"></div>
+  </section>
 
   <!-- End page content -->
 </div>
