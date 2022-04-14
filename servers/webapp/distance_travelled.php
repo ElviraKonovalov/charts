@@ -95,10 +95,8 @@
 
    //====================== CALCULATE MONTHLY ==================================
     $monthly=array();
-
-    $total_of_the_month=0;
   
-    //calculate how many time we should run this step.
+    //calculate how many time we should run the next step.
     $times=(intval(sizeof($arr)/30)+1);
   
     $j=0;
@@ -126,6 +124,41 @@
   
     }
 
+   //====================== CALCULATE YEARLY ==================================
+    $yearly=array();
+
+    //calculate how many times we should run the next step.
+    $times=(intval(sizeof($arr)/365)+1);
+
+    $j=0;
+
+    for($i=0;$i<$times;$i++){
+      $total_of_the_year=0;
+
+      $currentYear=date("y",$arr[$j][0]);
+
+      do{
+        $total_of_the_year = $arr[$j][1]+$total_of_the_year;
+  
+        if($j>=sizeof($arr)-1){
+          break;
+        }
+  
+        $j++;
+  
+        $thisYear=date("y",$arr[$j][0]);
+  
+      }while($thisYear==$currentYear);
+  
+      //Store into DB
+      $insert=array("['20".$currentYear."',".$total_of_the_year."]");
+      $yearly[]=$insert;
+
+    }
+
+
+  
+
   //searches for user selection  
   if(isset($_POST["submit"])){
 
@@ -136,6 +169,9 @@
     }
     else if($time=="monthly"){
       $display=$monthly;
+    }
+    else if($time=="yearly"){
+      $display=$yearly;
     }
   }
   else{
