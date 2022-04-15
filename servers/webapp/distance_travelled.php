@@ -1,122 +1,120 @@
 <?php
    include 'includes/db-connect.php';
-   include 'includes/header.php';
-
-   // setting up my select query
-   $sql = "SELECT * FROM distancetravelled";
-
-   if(!$conn ) {
-     die('Could not connect: ' . mysqli_error());
-   }
-   $result = $conn->query($sql);
  
+   $jsondata=file_get_contents("stats.json");
+   $json=json_decode($jsondata,true);
+
+   foreach($json as $days){
+    $date=$days['startTime'];
+    $distance=$days['distance'];
+
+    $day=strtotime($date);
+
+    $insert = array($day,$distance);
+
+    $arr[] = $insert; 
+
+    }
+
    if (!empty($result) && $result->num_rows > 0) {
  
    $arr=array();
  
-   // output data from each row of the database into each row of the table
-   while($row = $result->fetch_assoc()) {
- 
-     $date=$row["Day"];
-     $distance=$row["Distance"];
- 
-     $day =strtotime($date);
- 
-     $insert = array($day,$distance);
- 
-     $arr[] = $insert; 
- 
-     }
-   }
-
+  }
 
   //====================== CALCULATE WEEKLY ==================================
 
-
-  // 1) Weekly array
   $weekly=array();
 
-  // 2) add up the first set of weeks (x day to Saturday)
-  $total_otw=0;
   $i=0;
-  do {
-
-    $total_otw = $arr[$i][1]+$total_otw;
-
-    $dayOfWeek = date("l", $arr[$i][0]);
-
-    $i++;
-  } while($dayOfWeek!="Saturday");
-
-  //Store into array
-  $insert=array("['w1',".$total_otw."]");
-  $weekly[]=$insert;
-
-  // # of days for w1 (need to for last week calc.)
-  $w1 = $i;
-
-  $k=0;
-
-  //3. add up any middle week (if total days > 7, while )
-  if((sizeof($arr)-$i)>7){
-
-    //calculate how many times we should run next step
-    $times = intval((sizeof($arr)-$i)/7);
-
-    for(;$k<$times;$k++){
-      $total_otw=0;
-      for($j=$i;$j<($i+7);$j++){
-        $total_otw = $arr[$j][1]+$total_otw;
-      }
-      $i=$j;
-
-      //Store into DB
-      $insert=array("['w".($k+2)."',".$total_otw."]");
-      $weekly[]=$insert;
-
-    }
-  }
-
-  // 4) add up last week
   $total_otw=0;
 
-  while($i<sizeof($arr)){
-    $total_otw = $arr[$i][1]+$total_otw;
-    $dayOfWeek = date("l", $arr[$i][0]);
-    $i++;
+  for($i=0;$i<sizeof($arr);$i++){
+    $total_otw+=$arr[$i][1];
+
+    $dayOfWeek= date("l", $arr[$i][0]);
+
+    if(($i+1)!=sizeof($arr)){
+      $nextDay= date("l", $arr[$i+1][0]);
+    }else{$nextDay= date("l", $arr[$i][0]);}
+
+    $thisMonth=date("m",$arr[$i][0]);
+    $thisYear=date("y",$arr[$i][0]);
+
+    //check if next day is not beyond sunday
+    if($dayOfWeek>=$nextDay){
+      $insert=array("['w".($i+1)."',".$total_otw."]");
+      $weekly[]=$insert; 
+      $total_otw=0;
+      continue;
+    }
+
+    //Check if the next entry is in the same month and year
+    if(($i+1)!=sizeof($arr)){
+      $nextMonth=date("m",$arr[$i+1][0]);
+      $nextYear=date("y",$arr[$i+1][0]);
+
+      if($thisMonth!=$nextMonth || $thisYear!=$nextYear){
+        $insert=array("['w".($i+1)."',".$total_otw."]");
+        $weekly[]=$insert; 
+        $total_otw=0;
+        continue;
+      }
+    }
+
   }
-
-  //Store into DB
-  $insert=array("['w".($k+2)."',".$total_otw."]");
-  $weekly[]=$insert; 
-
- 
-  // $time = $_POST["time"];
-
-   //====================== CALCULATE MONTHLY ==================================
+  //====================== CALCULATE MONTHLY ==================================
     $monthly=array();
-  
-    //calculate how many time we should run the next step.
-    $times=(intval(sizeof($arr)/30)+1);
-  
+    
+    $times=0;
+
+    for($i=0;$i<sizeof($arr);$i++){
+
+      $thisMonth=date("m",$arr[$i][0]);
+      $thisYear=date("y",$arr[$i][0]);
+
+      if(($i+1)!=sizeof($arr)){
+        $nextMonth=date("m",$arr[$i+1][0]);
+        $nextYear=date("y",$arr[$i+1][0]);
+
+        if($thisMonth!=$nextMonth || $thisYear!=$nextYear){
+          $times++;
+        }
+      }
+    }
+    $times++;
+
     $j=0;
   
     for($i=0;$i<$times;$i++){
   
       $total_of_the_month=0;
      
+      $continue=true;
+
+      $thisMonth=date("m",$arr[$i][0]);
+      $thisYear=date("y",$arr[$i][0]);
+
+      //loop through the month
       do{
         $total_of_the_month = $arr[$j][1]+$total_of_the_month;
   
         if($j>=sizeof($arr)-1){
           break;
         }
-  
         $j++;
-  
-        $nDay=date("d",$arr[$j][0]);
-  
-      }while($nDay!=1);
+        //$nDay=date("d",$arr[$j][0]);
+
+        if(($j)!=sizeof($arr)){
+          $nextMonth=date("m",$arr[$j][0]);
+          $nextYear=date("y",$arr[$j][0]);
+        
+          if($thisMonth!=$nextMonth || $thisYear!=$nextYear){
+            $continue=false;
+          }
+        }
+
+      }while($continue==true);
   
       //Store into DB
       $insert=array("['m".($i+1)."',".$total_of_the_month."]");
@@ -124,12 +122,29 @@
   
     }
 
+    if($times==0){
+      $insert=array("['No stats',0]");
+      $monthly[]=$insert;
+    }
+
    //====================== CALCULATE YEARLY ==================================
     $yearly=array();
 
-    //calculate how many times we should run the next step.
-    $times=(intval(sizeof($arr)/365)+1);
+    $times=0;
 
+    for($i=0;$i<sizeof($arr);$i++){
+
+      $thisYear=date("y",$arr[$i][0]);
+
+      if(($i+1)!=sizeof($arr)){
+        $nextYear=date("y",$arr[$i+1][0]);
+
+        if($thisYear!=$nextYear){
+          $times++;
+        }
+      }
+    }
+    $times++;
     $j=0;
 
     for($i=0;$i<$times;$i++){
@@ -155,9 +170,11 @@
       $yearly[]=$insert;
 
     }
-
-
   
+    if($times==0){
+      $insert=array("['No stats',0]");
+      $yearly[]=$insert;
+    }
 
   //searches for user selection  
   if(isset($_POST["submit"])){
