@@ -33,12 +33,13 @@
   }
 
   // inserting data from json file into sql database
-  $sql0 = "INSERT INTO calsBurnt(Day, Calories) VALUES('$day', '$calories')";
+ /* 
+ $sql0 = "INSERT INTO calsBurnt(Day, Calories) VALUES('$day', '$calories')";
   if(!$conn ) {
     die('Could not connect: ' . mysqli_error());
  }
   $result0 = $conn->query($sql0);
-
+*/
 
 
   // setting up my select query
