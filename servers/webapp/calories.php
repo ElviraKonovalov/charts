@@ -2,27 +2,81 @@
 
   include 'header.php';
 
+
   $db_servername="localhost";
   $db_username="root";
   $db_password="";
   $db_name="test";
 
   $conn=mysqli_connect($db_servername,$db_username,$db_password,$db_name);
+  if(!$conn ) {
+    die('Could not connect: ' . mysqli_error());
+ }
+
+
+
+  // retrieving and preparing data from json file
+
+  $json = file_get_contents('stats.json');
+  $data = json_decode($json,true);
+
+  foreach ($data as $days) {
+    $date = $days['startTime'];
+    $calories = $days['calsBurned'];
+
+    $day = strtotime($date);
+    $day = date('d F Y', $day);
+
+    $insert=array("['".$day."',".$calories."]");
+
+    $arr[] = $insert;
+  }
+
+  // inserting data from json file into sql database
+  $sql0 = "INSERT INTO calsBurnt(Day, Calories) VALUES('$day', '$calories')";
+  if(!$conn ) {
+    die('Could not connect: ' . mysqli_error());
+ }
+  $result0 = $conn->query($sql0);
+
+
 
   // setting up my select query
-  $sql = "SELECT * FROM calsBurnt";
+  $sql1 = "SELECT * FROM calsBurnt WHERE Day >= '2021-06-01' AND Day <= '2021-06-07'";
+  $sql2 = "SELECT * FROM calsBurnt WHERE Day >= '2021-06-15' AND Day <= '2021-06-21'";
+  $sql3 = "SELECT * FROM calsBurnt WHERE Day >= '2021-07-07' AND Day <= '2021-07-14'";
+  $sql4 = "SELECT * FROM calsBurnt WHERE Day >= '2022-07-15' AND Day <= '2022-07-21'";
+  $sqljun = "SELECT * FROM calsBurnt WHERE Day >= '2021-06-01' AND Day <= '2021-06-30'";
+  $sqljul1 = "SELECT * FROM calsBurnt WHERE Day >= '2021-07-01' AND Day <= '2021-07-31'";
+  $sqljul2 = "SELECT * FROM calsBurnt WHERE Day >= '2022-07-01' AND Day <= '2022-07-31'";
+  $sql21 = "SELECT * FROM calsBurnt WHERE Day >= '2021-01-01' AND Day <= '2021-12-31'";
+  $sql22 = "SELECT * FROM calsBurnt WHERE Day >= '2022-01-01' AND Day <= '2022-12-31'";
+
 
   if(!$conn ) {
     die('Could not connect: ' . mysqli_error());
  }
-  $result = $conn->query($sql);
+  
+  $result1 = $conn->query($sql1);
+  $result2 = $conn->query($sql2); 
+  $result3 = $conn->query($sql3);
+  $result4 = $conn->query($sql4); 
 
- if (!empty($result) && $result->num_rows > 0) {
+  $resultjun = $conn->query($sqljun);
+  $resultjul1 = $conn->query($sqljul1); 
+  $resultjul2 = $conn->query($sqljul2); 
+  $result21 = $conn->query($sql21);
+  $result22 = $conn->query($sql22); 
 
-  $arr=array();
+
+
+
+  if (!empty($result1) && $result1->num_rows > 0) {
+
+  $arr1=array();
 
   // output data from each row of the database into each row of the table
-  while($row = $result->fetch_assoc()) {
+  while($row = $result1->fetch_assoc()) {
 
     $date=$row["Day"];
     $calories =$row["Calories"];
@@ -30,12 +84,212 @@
     $date =strtotime($date);
     $day = date('d F Y', $date);
 
-    $insert=array("['".$day."',".$calories."]");
+    $insert1=array("['".$day."',".$calories."]");
 
-    $arr[] = $insert; 
+    $arr1[] = $insert1; 
 
     }
   }
+
+  if (!empty($result2) && $result2->num_rows > 0) {
+
+  $arr2=array();
+
+  // output data from each row of the database into each row of the table
+  while($row = $result2->fetch_assoc()) {
+
+    $date=$row["Day"];
+    $calories =$row["Calories"];
+
+    $date =strtotime($date);
+    $day = date('d F Y', $date);
+
+    $insert2=array("['".$day."',".$calories."]");
+
+    $arr2[] = $insert2; 
+
+    }
+  } 
+
+  if (!empty($result3) && $result3->num_rows > 0) {
+
+  $arr3=array();
+
+  // output data from each row of the database into each row of the table
+  while($row = $result3->fetch_assoc()) {
+
+    $date=$row["Day"];
+    $calories =$row["Calories"];
+
+    $date =strtotime($date);
+    $day = date('d F Y', $date);
+
+    $insert3=array("['".$day."',".$calories."]");
+
+    $arr3[] = $insert3; 
+
+    }
+  } 
+
+  if (!empty($result4) && $result4->num_rows > 0) {
+
+  $arr4=array();
+
+  // output data from each row of the database into each row of the table
+  while($row = $result4->fetch_assoc()) {
+
+    $date=$row["Day"];
+    $calories =$row["Calories"];
+
+    $date =strtotime($date);
+    $day = date('d F Y', $date);
+
+    $insert4=array("['".$day."',".$calories."]");
+
+    $arr4[] = $insert4; 
+
+    }
+  } 
+
+  if (!empty($resultjun) && $resultjun->num_rows > 0) {
+
+  $arrjun=array();
+
+  // output data from each row of the database into each row of the table
+  while($row = $resultjun->fetch_assoc()) {
+
+    $date=$row["Day"];
+    $calories =$row["Calories"];
+
+    $date =strtotime($date);
+    $day = date('d F Y', $date);
+
+    $insertjun=array("['".$day."',".$calories."]");
+
+    $arrjun[] = $insertjun; 
+
+    }
+  } 
+
+  if (!empty($resultjul1) && $resultjul1->num_rows > 0) {
+
+  $arrjul1=array();
+
+  // output data from each row of the database into each row of the table
+  while($row = $resultjul1->fetch_assoc()) {
+
+    $date=$row["Day"];
+    $calories =$row["Calories"];
+
+    $date =strtotime($date);
+    $day = date('d F Y', $date);
+
+    $insertjul1=array("['".$day."',".$calories."]");
+
+    $arrjul1[] = $insertjul1; 
+
+    }
+  } 
+
+  if (!empty($resultjul2) && $resultjul2->num_rows > 0) {
+
+  $arrjul2=array();
+
+  // output data from each row of the database into each row of the table
+  while($row = $resultjul2->fetch_assoc()) {
+
+    $date=$row["Day"];
+    $calories =$row["Calories"];
+
+    $date =strtotime($date);
+    $day = date('d F Y', $date);
+
+    $insertjul2=array("['".$day."',".$calories."]");
+
+    $arrjul2[] = $insertjul2; 
+
+    }
+  } 
+
+  if (!empty($result21) && $result21->num_rows > 0) {
+
+  $arr21=array();
+
+  // output data from each row of the database into each row of the table
+  while($row = $result21->fetch_assoc()) {
+
+    $date=$row["Day"];
+    $calories =$row["Calories"];
+
+    $date =strtotime($date);
+    $day = date('d F Y', $date);
+
+    $insert21=array("['".$day."',".$calories."]");
+
+    $arr21[] = $insert21; 
+
+    }
+  } 
+
+  if (!empty($result22) && $result22->num_rows > 0) {
+
+  $arr22=array();
+
+  // output data from each row of the database into each row of the table
+  while($row = $result22->fetch_assoc()) {
+
+    $date=$row["Day"];
+    $calories =$row["Calories"];
+
+    $date =strtotime($date);
+    $day = date('d F Y', $date);
+
+    $insert22=array("['".$day."',".$calories."]");
+
+    $arr22[] = $insert22; 
+
+    }
+  } 
+
+  //searches for user selection  
+  if(isset($_POST["submit"])){
+
+    $time=$_POST["time"];
+
+    if($time=="week1"){
+      $display=$arr1;
+    }
+    else if($time=="week2"){
+      $display=$arr2;
+    }
+    else if($time=="week3"){
+      $display=$arr3;
+    }
+    else if($time=="week4"){
+      $display=$arr4;
+    }
+    else if($time=="June 2021"){
+      $display=$arrjun;
+    }
+    else if($time=="July 2021"){
+      $display=$arrjul1;
+    }
+    else if($time=="July 2022"){
+      $display=$arrjul2;
+    }
+    else if($time=="2021"){
+      $display=$arr21;
+    }
+    else if($time=="2022"){
+      $display=$arr22;
+    }
+  }
+  else{
+    $display=$arr4;
+  }
+
+
+
 
 
 ?>
@@ -48,8 +302,8 @@
       var data = google.visualization.arrayToDataTable([
         ["Day", "Calories"]
         <?php
-        for($i=0;$i<sizeof($arr);$i++){
-          foreach($arr[$i] as $entry) {
+        for($i=0;$i<sizeof($display);$i++){
+          foreach($display[$i] as $entry) {
             echo ",".$entry;
           }
         }
@@ -64,6 +318,7 @@
         height: 400,
         bar: {groupWidth: "95%"},
         legend: { position: "none" },
+        colors: ['#e0440e'],
       };
       var chart = new google.visualization.ColumnChart(document.getElementById("columnchart_values"));
       chart.draw(view, options);
@@ -128,12 +383,30 @@
     <!-- <div id='chart' class='chart'></div> -->
   </div>
 
-  <div id="columnchart_values" style="width: 900px; height: 300px;"></div>
+   <section id="wrapper">
+
+    <div id="buttons">
+    <form method="POST" action="<?php echo $_SERVER['PHP_SELF']; ?>">
+      <select name="time" id="time">
+        <option value="week1">June 1, 2021 - June 7, 2021</option>
+        <option value="week2">June 14, 2021 - June 21, 2021</option>
+        <option value="week3">July 7, 2021 - July 14, 2021</option>
+        <option value="week4">July 15, 2022 - Jult 21, 2022</option>
+        <option value="June 2021">June 2021</option>
+        <option value="July 2021">July 2021</option>
+        <option value="July 2022">July 2022</option>
+        <option value="2021">2021</option>
+        <option value="2022">2022</option>
+      </select>
+      <button type="submit" name="submit">GENERATE</button>
+      </form>
+    </div>
+    <div id="columnchart_values"></div>
+  </section>
 
   <!-- End page content -->
 </div>
 
 </body>
 
-
-</html> 
+</html>
