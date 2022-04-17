@@ -1,4 +1,5 @@
 <?php
+   include 'includes/db-connect.php';
  
    $jsondata=file_get_contents("stats.json");
    $json=json_decode($jsondata,true);
@@ -14,7 +15,12 @@
     $arr[] = $insert; 
 
     }
+
+   if (!empty($result) && $result->num_rows > 0) {
  
+   $arr=array();
+ 
+  }
 
   //====================== CALCULATE WEEKLY ==================================
 
